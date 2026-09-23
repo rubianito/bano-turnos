@@ -1,4 +1,4 @@
-﻿/* ========================================================
+/* ========================================================
    VARIABLES & TEMAS
    ======================================================== */
 :root {
@@ -303,6 +303,69 @@ body {
   padding: 2px 8px;
   border-radius: var(--radius-full);
   box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
+}
+
+/* ========================================================
+   BANNER DE SOLICITUD RÁPIDA / GUÍA (BAJAR A LA FILA)
+   ======================================================== */
+.quick-turn-banner {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--primary);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 20px;
+  box-shadow: var(--card-shadow);
+}
+
+.quick-turn-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 240px;
+}
+
+.quick-turn-icon {
+  font-size: 1.8rem;
+  animation: bounce-down 1.5s infinite;
+}
+
+@keyframes bounce-down {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(5px); }
+}
+
+.quick-turn-info strong {
+  font-size: 1rem;
+  color: var(--text-main);
+  display: block;
+}
+
+.quick-turn-info p {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.quick-turn-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pulse-focus {
+  animation: highlight-pulse 1.8s ease-out;
+}
+
+@keyframes highlight-pulse {
+  0% { transform: scale(1.03); box-shadow: 0 0 0 6px var(--primary); }
+  100% { transform: scale(1); box-shadow: var(--card-shadow); }
 }
 
 /* ========================================================

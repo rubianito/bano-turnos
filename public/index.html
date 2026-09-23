@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="theme-clean">
+<body class="theme-dark">
   <div class="app-container">
     
     <!-- ENCABEZADO SUPERIOR -->
@@ -26,8 +26,8 @@
         <div class="theme-picker">
           <label for="themeSelect">🎨</label>
           <select id="themeSelect">
+            <option value="theme-dark" selected>🌙 Neón</option>
             <option value="theme-clean">🧼 Limpio</option>
-            <option value="theme-dark">🌙 Neón</option>
             <option value="theme-duck">🐥 Pato</option>
             <option value="theme-office">🏢 Oficina</option>
           </select>
@@ -117,6 +117,25 @@
         </button>
       </div>
 
+      <!-- AVISO DIRECTO PARA PEDIR TURNO Y ACCESO RÁPIDO -->
+      <div class="quick-turn-banner" id="quickTurnBanner">
+        <div class="quick-turn-info">
+          <span class="quick-turn-icon">👇</span>
+          <div>
+            <strong>¿Quieres usar el baño?</strong>
+            <p>Para solicitar tu turno y anotarte en la lista de espera, <strong>desliza hacia abajo</strong> o presiona aquí:</p>
+          </div>
+        </div>
+        <div class="quick-turn-actions">
+          <button id="btnBannerJoinQueue" class="btn btn-primary btn-md">
+            ➕ Pedir Mi Turno
+          </button>
+          <button id="btnScrollToQueue" class="btn btn-outline btn-md">
+            ⬇️ Bajar a la Fila
+          </button>
+        </div>
+      </div>
+
       <!-- PANEL DE ADMINISTRACIÓN EXCLUSIVO PARA EDWARD -->
       <div id="adminPanelCard" class="card admin-card" style="display:none;">
         <div class="card-header space-between" style="background: rgba(79, 70, 229, 0.08);">
@@ -168,7 +187,7 @@
       <div class="dashboard-grid">
         
         <!-- COLUMNA 1: MI TURNO EN LA LISTA DE ESPERA -->
-        <div class="card request-card">
+        <div class="card request-card" id="requestCard">
           <div class="card-header">
             <h3><span class="header-icon">🙋</span> Mi Solicitud de Turno</h3>
           </div>

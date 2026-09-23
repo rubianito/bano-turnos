@@ -1,4 +1,4 @@
-﻿// ========================================================
+// ========================================================
 // ESTADO GLOBAL DEL CLIENTE
 // ========================================================
 let appState = {
@@ -90,7 +90,11 @@ function triggerBrowserNotification(title, body) {
 
 function initTheme() {
   const themeSelect = document.getElementById("themeSelect");
-  const savedTheme = localStorage.getItem("bano_theme") || "theme-clean";
+  let savedTheme = localStorage.getItem("bano_theme");
+  if (!savedTheme || savedTheme === "theme-clean") {
+    savedTheme = "theme-dark";
+    localStorage.setItem("bano_theme", "theme-dark");
+  }
   document.body.className = savedTheme;
   themeSelect.value = savedTheme;
 
@@ -313,6 +317,48 @@ function initFormEvents() {
       if (res.ok) showToast("Has salido de la lista de espera.");
     } catch (e) {}
   });
+
+  const btnScroll = document.getElementById("btnScrollToQueue");
+  if (btnScroll) {
+    btnScroll.addEventListener("click", () => {
+      const card = document.getElementById("requestCard");
+      if (card) {
+        card.scrollIntoView({ behavior: "smooth", block: "center" });
+        card.classList.remove("pulse-focus");
+        void card.offsetWidth;
+        card.classList.add("pulse-focus");
+      }
+    });
+  }
+
+  const btnBannerJoin = document.getElementById("btnBannerJoinQueue");
+  if (btnBannerJoin) {
+    btnBannerJoin.addEventListener("click", async () => {
+      if (!currentUser) return;
+      try {
+        const res = await fetch("/api/queue", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: currentUser.id }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Error al pedir turno");
+
+        showToast("¡Turno solicitado! Estás en la lista de espera.", "success");
+        playChime();
+
+        const card = document.getElementById("requestCard");
+        if (card) {
+          card.scrollIntoView({ behavior: "smooth", block: "center" });
+          card.classList.remove("pulse-focus");
+          void card.offsetWidth;
+          card.classList.add("pulse-focus");
+        }
+      } catch (err) {
+        showToast(err.message, "error");
+      }
+    });
+  }
 
   const btnLeaveFromCard = document.getElementById("btnLeaveFromCard");
   if (btnLeaveFromCard) {
