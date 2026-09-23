@@ -32,10 +32,25 @@ document.addEventListener("DOMContentLoaded", () => {
   timerInterval = setInterval(updateAllTimers, 1000);
 });
 
+function getAdminToken() {
+  return localStorage.getItem("bano_admin_token") || "";
+}
+
 function loadSavedUser() {
   try {
     const saved = localStorage.getItem("bano_current_user");
-    if (saved) currentUser = JSON.parse(saved);
+    if (saved) {
+      const user = JSON.parse(saved);
+      if (user && user.name && user.name.trim().toLowerCase() === "edward") {
+        const token = localStorage.getItem("bano_admin_token");
+        if (!token) {
+          currentUser = null;
+          localStorage.removeItem("bano_current_user");
+          return;
+        }
+      }
+      currentUser = user;
+    }
   } catch (e) {
     currentUser = null;
   }
@@ -246,24 +261,79 @@ function playUrgentAlarm() {
 // EVENTOS Y FORMULARIOS
 // ========================================================
 function initFormEvents() {
+  const inputUserName = document.getElementById("inputUserName");
+  const edwardPasswordGroup = document.getElementById("edwardPasswordGroup");
+  const inputAdminPassword = document.getElementById("inputAdminPassword");
+  const btnTogglePassword = document.getElementById("btnTogglePassword");
+
+  // Mostrar / ocultar campo de contraseña dinámicamente si escribe "Edward"
+  if (inputUserName && edwardPasswordGroup && inputAdminPassword) {
+    inputUserName.addEventListener("input", () => {
+      const val = inputUserName.value.trim().toLowerCase();
+      if (val === "edward") {
+        edwardPasswordGroup.style.display = "block";
+        inputAdminPassword.required = true;
+      } else {
+        edwardPasswordGroup.style.display = "none";
+        inputAdminPassword.required = false;
+        inputAdminPassword.value = "";
+      }
+    });
+  }
+
+  // Alternar ver / ocultar contraseña
+  if (btnTogglePassword && inputAdminPassword) {
+    btnTogglePassword.addEventListener("click", () => {
+      const isPw = inputAdminPassword.type === "password";
+      inputAdminPassword.type = isPw ? "text" : "password";
+      btnTogglePassword.textContent = isPw ? "🙈" : "👁️";
+    });
+  }
+
   const formLogin = document.getElementById("formLogin");
   formLogin.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const input = document.getElementById("inputUserName");
-    const name = input.value.trim();
+    const name = inputUserName.value.trim();
     if (!name) return;
 
+    const isEdward = name.toLowerCase() === "edward";
+    const password = isEdward && inputAdminPassword ? inputAdminPassword.value : undefined;
+
+    if (isEdward && !password) {
+      if (edwardPasswordGroup) edwardPasswordGroup.style.display = "block";
+      if (inputAdminPassword) {
+        inputAdminPassword.required = true;
+        inputAdminPassword.focus();
+      }
+      showToast("Ingresa la contraseña de administrador.", "error");
+      return;
+    }
+
     try {
+      const payload = { name };
+      if (isEdward) payload.password = password;
+
       const res = await fetch("/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al ingresar");
 
+      if (data.adminToken) {
+        localStorage.setItem("bano_admin_token", data.adminToken);
+      } else {
+        localStorage.removeItem("bano_admin_token");
+      }
+
       setCurrentUser(data.user);
-      input.value = "";
+      inputUserName.value = "";
+      if (inputAdminPassword) {
+        inputAdminPassword.value = "";
+        if (edwardPasswordGroup) edwardPasswordGroup.style.display = "none";
+      }
+
       showToast(`¡Bienvenido, ${data.user.name}!`, "success");
       playChime();
 
@@ -272,6 +342,9 @@ function initFormEvents() {
       }
     } catch (err) {
       showToast(err.message, "error");
+      if (isEdward && inputAdminPassword) {
+        inputAdminPassword.focus();
+      }
     }
   });
 
@@ -279,6 +352,7 @@ function initFormEvents() {
   btnChangeUser.addEventListener("click", () => {
     currentUser = null;
     localStorage.removeItem("bano_current_user");
+    localStorage.removeItem("bano_admin_token");
     handleStateUpdate(appState);
     showToast("Has salido. Ingresa con otro nombre.");
   });
@@ -409,7 +483,11 @@ function initFormEvents() {
         const res = await fetch("/api/admin/bathrooms/count", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: currentUser.id, count }),
+          body: JSON.stringify({
+            userId: currentUser.id,
+            count,
+            adminToken: getAdminToken(),
+          }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Error al cambiar cantidad");
@@ -424,12 +502,21 @@ function initFormEvents() {
 
   document.querySelectorAll(".btn-test").forEach((btn) => {
     btn.addEventListener("click", async () => {
+      if (!currentUser) return;
       const mins = btn.dataset.simMins;
+      const simSelect = document.getElementById("adminSimBathroomSelect");
+      const bathroomId = simSelect && simSelect.value ? simSelect.value : null;
+
       try {
         const res = await fetch("/api/bathroom/simulate-time", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ minutes: mins }),
+          body: JSON.stringify({
+            userId: currentUser.id,
+            adminToken: getAdminToken(),
+            bathroomId,
+            minutes: mins,
+          }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Error en simulación");
@@ -439,6 +526,56 @@ function initFormEvents() {
       }
     });
   });
+
+  const formChangePw = document.getElementById("formChangePassword");
+  if (formChangePw) {
+    formChangePw.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!currentUser) return;
+
+      const currentPassword = document.getElementById("adminCurrentPw").value;
+      const newPassword = document.getElementById("adminNewPw").value;
+      const confirmPassword = document.getElementById("adminConfirmPw").value;
+
+      if (newPassword !== confirmPassword) {
+        showToast("La confirmación de la contraseña no coincide.", "error");
+        return;
+      }
+
+      if (newPassword.trim().length < 4) {
+        showToast("La nueva contraseña debe tener al menos 4 caracteres.", "error");
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/admin/change-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: currentUser.id,
+            currentPassword,
+            newPassword,
+            adminToken: getAdminToken(),
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Error al cambiar contraseña");
+
+        if (data.adminToken) {
+          localStorage.setItem("bano_admin_token", data.adminToken);
+        }
+
+        document.getElementById("adminCurrentPw").value = "";
+        document.getElementById("adminNewPw").value = "";
+        document.getElementById("adminConfirmPw").value = "";
+
+        showToast(data.message, "success");
+        playChime();
+      } catch (err) {
+        showToast(err.message, "error");
+      }
+    });
+  }
 }
 
 async function enterBathroom(userId, bathroomId = null) {
@@ -487,6 +624,32 @@ async function leaveBathroom(force = false, bathroomId = null) {
   }
 }
 
+window.deleteUser = async function (targetUserId, targetName) {
+  if (!currentUser) return;
+  if (!confirm(`¿Estás seguro de eliminar al usuario "${targetName}" del sistema? Esta acción no se puede deshacer.`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/admin/users/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: currentUser.id,
+        targetUserId,
+        adminToken: getAdminToken(),
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Error al eliminar usuario");
+
+    showToast(data.message, "success");
+    playChime();
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+};
+
 window.toggleMaintenance = async function (bathroomId, currentState) {
   if (!currentUser) return;
   const nextState = !currentState;
@@ -502,6 +665,7 @@ window.toggleMaintenance = async function (bathroomId, currentState) {
         userId: currentUser.id,
         bathroomId,
         maintenance: nextState,
+        adminToken: getAdminToken(),
       }),
     });
     const data = await res.json();
@@ -641,6 +805,8 @@ function renderAdminPanel(state) {
   const adminCard = document.getElementById("adminPanelCard");
   const adminCount = document.getElementById("adminCurrentCount");
   const maintList = document.getElementById("adminMaintenanceList");
+  const simSelect = document.getElementById("adminSimBathroomSelect");
+  const usersList = document.getElementById("adminUsersList");
   if (!adminCard) return;
 
   const isEdward = currentUser && currentUser.name.trim().toLowerCase() === "edward";
@@ -651,6 +817,8 @@ function renderAdminPanel(state) {
 
   adminCard.style.display = "block";
   const bathrooms = state.bathrooms || [];
+  const users = state.users || [];
+  const queue = state.queue || [];
 
   if (adminCount) adminCount.textContent = bathrooms.length;
 
@@ -679,6 +847,85 @@ function renderAdminPanel(state) {
         `;
       })
       .join("");
+  }
+
+  // Actualizar selector de baño para el simulador de prueba
+  if (simSelect) {
+    const currentVal = simSelect.value;
+    let simHtml = `<option value="">Baño Ocupado (Auto)</option>`;
+    bathrooms.forEach((b) => {
+      const occupiedText = b.currentTurn ? `(Ocupado: ${b.currentTurn.userName || 'Alguien'})` : '(Libre)';
+      simHtml += `<option value="${b.id}">${escapeHtml(b.name)} ${occupiedText}</option>`;
+    });
+    simSelect.innerHTML = simHtml;
+    if (currentVal) simSelect.value = currentVal;
+  }
+
+  // Actualizar lista de gestión y eliminación de usuarios
+  if (usersList) {
+    if (users.length === 0) {
+      usersList.innerHTML = `<p class="muted-text" style="padding:10px;"><small>No hay usuarios registrados.</small></p>`;
+    } else {
+      usersList.innerHTML = users
+        .map((u) => {
+          const isUserAdmin = u.name.trim().toLowerCase() === "edward";
+          const activeBath = bathrooms.find(
+            (b) =>
+              b.currentTurn &&
+              (b.currentTurn.userId === u.id ||
+                (b.currentTurn.userName &&
+                  b.currentTurn.userName.toLowerCase() === u.name.toLowerCase()))
+          );
+          const queueIndex = queue.findIndex(
+            (q) =>
+              q.userId === u.id ||
+              (q.userName && q.userName.toLowerCase() === u.name.toLowerCase())
+          );
+          const inQueue = queueIndex >= 0;
+
+          let badgeHtml = "";
+          let actionBtnHtml = "";
+
+          if (isUserAdmin) {
+            badgeHtml = `<span class="user-status-tag tag-protected">👑 Administrador</span>`;
+            actionBtnHtml = `<small class="muted-text">Protegido</small>`;
+          } else if (activeBath) {
+            badgeHtml = `<span class="user-status-tag tag-busy">🚽 En ${escapeHtml(activeBath.name)}</span>`;
+            actionBtnHtml = `
+              <button class="btn btn-sm btn-outline" disabled title="No se puede eliminar mientras use el baño">
+                🔒 En uso
+              </button>
+            `;
+          } else if (inQueue) {
+            badgeHtml = `<span class="user-status-tag tag-queue">📋 Fila #${queueIndex + 1}</span>`;
+            actionBtnHtml = `
+              <button class="btn btn-sm btn-outline" disabled title="No se puede eliminar mientras tenga turno pendiente">
+                🔒 En espera
+              </button>
+            `;
+          } else {
+            badgeHtml = `<span class="user-status-tag tag-free">🟢 Sin actividad</span>`;
+            actionBtnHtml = `
+              <button class="btn btn-sm btn-outline-danger" onclick="deleteUser('${u.id}', '${escapeHtml(u.name)}')">
+                🗑️ Eliminar
+              </button>
+            `;
+          }
+
+          return `
+            <div class="admin-user-row">
+              <div class="admin-user-info">
+                <span class="admin-user-name">${escapeHtml(u.name)}</span>
+                ${badgeHtml}
+              </div>
+              <div class="admin-user-actions">
+                ${actionBtnHtml}
+              </div>
+            </div>
+          `;
+        })
+        .join("");
+    }
   }
 }
 
@@ -1046,13 +1293,29 @@ function renderLoginChips(users) {
 
 window.selectExistingUser = function (userId) {
   const user = (appState.users || []).find((u) => u.id === userId);
-  if (user) {
-    setCurrentUser(user);
-    showToast(`¡Hola, ${user.name}!`, "success");
-    playChime();
-    if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
+  if (!user) return;
+
+  if (user.name.trim().toLowerCase() === "edward") {
+    const input = document.getElementById("inputUserName");
+    const pwGroup = document.getElementById("edwardPasswordGroup");
+    const pwInput = document.getElementById("inputAdminPassword");
+    if (input) input.value = "Edward";
+    if (pwGroup) pwGroup.style.display = "block";
+    if (pwInput) {
+      pwInput.required = true;
+      pwInput.value = "";
+      pwInput.focus();
     }
+    showToast("👑 Usuario Edward: Ingresa tu contraseña de administrador.", "info");
+    return;
+  }
+
+  // Cualquier otro usuario (sin contraseña)
+  setCurrentUser(user);
+  showToast(`¡Hola, ${user.name}!`, "success");
+  playChime();
+  if ("Notification" in window && Notification.permission === "default") {
+    Notification.requestPermission();
   }
 };
 

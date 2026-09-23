@@ -66,7 +66,32 @@
               autofocus
             >
           </div>
-          <button type="submit" class="btn btn-primary btn-block btn-lg">
+
+          <!-- CAMPO DE CONTRASEÑA EXCLUSIVO PARA EDWARD -->
+          <div id="edwardPasswordGroup" class="form-group" style="display:none;">
+            <div class="admin-login-notice">
+              <span class="notice-icon">👑</span>
+              <div>
+                <strong>Acceso Administrador (Edward)</strong>
+                <p>Este usuario requiere tu contraseña de administrador para ingresar.</p>
+              </div>
+            </div>
+            <label for="inputAdminPassword">Contraseña de Administrador:</label>
+            <div class="password-input-wrapper">
+              <input 
+                type="password" 
+                id="inputAdminPassword" 
+                class="form-control form-control-lg" 
+                placeholder="Ingresa tu contraseña"
+                autocomplete="current-password"
+              >
+              <button type="button" id="btnTogglePassword" class="btn-toggle-eye" title="Mostrar/ocultar contraseña">
+                👁️
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block btn-lg" id="btnLoginSubmit">
             🚀 Entrar al Sistema
           </button>
         </form>
@@ -165,6 +190,57 @@
               </div>
             </div>
 
+            <!-- CONTROL 3: SIMULADOR DE TIEMPOS (EXCLUSIVO EDWARD) -->
+            <div class="admin-control-box admin-full-width">
+              <label><strong>🧪 Simulador de Tiempos de Prueba (Exclusivo Administrador):</strong></label>
+              <p class="admin-help-text">Simula minutos transcurridos en los baños ocupados para verificar las alertas de privacidad (10m advertencia, 20m revelar nombre):</p>
+              <div class="admin-sim-controls">
+                <select id="adminSimBathroomSelect" class="form-control form-control-sm" style="max-width: 180px;">
+                  <option value="">Baño Ocupado (Auto)</option>
+                </select>
+                <button type="button" class="btn btn-sm btn-outline btn-test" data-sim-mins="0">⏱️ 0 min (Normal)</button>
+                <button type="button" class="btn btn-sm btn-outline btn-test btn-test-warn" data-sim-mins="11">⚠️ 11 min (>10m)</button>
+                <button type="button" class="btn btn-sm btn-outline btn-test btn-test-urgent" data-sim-mins="21">🚨 21 min (>20m)</button>
+              </div>
+            </div>
+
+            <!-- CONTROL 4: GESTIÓN Y ELIMINACIÓN DE USUARIOS -->
+            <div class="admin-control-box admin-full-width">
+              <div class="space-between" style="align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+                <label style="margin-bottom:0;"><strong>👥 Gestión y Eliminación de Usuarios:</strong></label>
+                <small class="muted-text">Solo se permite eliminar usuarios que NO estén en el baño ni tengan turno pendiente</small>
+              </div>
+              <div id="adminUsersList" class="admin-users-table">
+                <!-- Inyectado dinámicamente -->
+              </div>
+            </div>
+
+            <!-- CONTROL 5: CAMBIAR CONTRASEÑA DE ADMINISTRADOR -->
+            <div class="admin-control-box admin-full-width">
+              <label><strong>🔑 Cambiar Contraseña de Administrador (Edward):</strong></label>
+              <form id="formChangePassword" class="admin-pw-form">
+                <div class="admin-pw-grid">
+                  <div class="form-group-sm">
+                    <label for="adminCurrentPw"><small>Contraseña Actual:</small></label>
+                    <input type="password" id="adminCurrentPw" class="form-control form-control-sm" placeholder="Contraseña actual" required autocomplete="current-password">
+                  </div>
+                  <div class="form-group-sm">
+                    <label for="adminNewPw"><small>Nueva Contraseña:</small></label>
+                    <input type="password" id="adminNewPw" class="form-control form-control-sm" placeholder="Mínimo 4 caracteres" required autocomplete="new-password">
+                  </div>
+                  <div class="form-group-sm">
+                    <label for="adminConfirmPw"><small>Confirmar Nueva:</small></label>
+                    <input type="password" id="adminConfirmPw" class="form-control form-control-sm" placeholder="Repite la nueva contraseña" required autocomplete="new-password">
+                  </div>
+                  <div class="form-group-sm admin-pw-btn-cell">
+                    <button type="submit" class="btn btn-primary btn-sm btn-block">
+                      💾 Guardar Contraseña
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+
           </div>
         </div>
       </div>
@@ -258,23 +334,6 @@
           </div>
         </div>
 
-      </div>
-
-      <!-- SECCIÓN COLAPSABLE: SIMULADOR DE PRUEBAS -->
-      <div class="card test-card-collapsed">
-        <details>
-          <summary><strong>🧪 Simulador de Tiempos de Prueba (10 min / 20 min)</strong></summary>
-          <div class="test-body">
-            <p class="helper-text">
-              Comprueba de inmediato cómo reaccionan las alertas de privacidad sin tener que esperar 20 minutos reales:
-            </p>
-            <div class="test-btn-group">
-              <button class="btn btn-test" data-sim-mins="0">⏱️ 0 min (Normal / Privado)</button>
-              <button class="btn btn-test btn-test-warn" data-sim-mins="11">⚠️ 11 min (Advertencia >10m)</button>
-              <button class="btn btn-test btn-test-urgent" data-sim-mins="21">🚨 21 min (Revelar Nombre >20m)</button>
-            </div>
-          </div>
-        </details>
       </div>
 
     </section>

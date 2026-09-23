@@ -1,4 +1,4 @@
-﻿const express = require("express");
+const express = require("express");
 const fs = require("fs");
 const path = require("path");
 
@@ -36,7 +36,18 @@ function loadData() {
       }
 
       if (!parsed.config) {
-        parsed.config = { adminName: "Edward" };
+        parsed.config = {
+          adminName: "Edward",
+          adminPassword: "Tunainpec19862**",
+          adminToken: "tok_edward_19862",
+        };
+      } else {
+        if (!parsed.config.adminPassword) {
+          parsed.config.adminPassword = "Tunainpec19862**";
+        }
+        if (!parsed.config.adminToken) {
+          parsed.config.adminToken = "tok_edward_19862";
+        }
       }
 
       // Asegurar que Edward exista en la lista de usuarios
@@ -66,7 +77,11 @@ function loadData() {
       { id: "usr_3", name: "Ana Gomez", createdAt: Date.now() + 3 },
     ],
     queue: [],
-    config: { adminName: "Edward" },
+    config: {
+      adminName: "Edward",
+      adminPassword: "Tunainpec19862**",
+      adminToken: "tok_edward_19862",
+    },
     bathrooms: [
       { id: 1, name: "Baño 1", status: "free", isMaintenance: false, currentTurn: null },
       { id: 2, name: "Baño 2", status: "free", isMaintenance: false, currentTurn: null },
@@ -84,11 +99,15 @@ function saveData(data) {
   }
 }
 
-// Validar si un usuario es el administrador Edward
-function isEdwardAdmin(data, userId) {
+// Validar si un usuario es el administrador Edward (opcionalmente verificando token de sesión)
+function isEdwardAdmin(data, userId, adminToken = null) {
   if (!userId) return false;
-  const user = data.users.find((u) => u.id === userId);
-  return Boolean(user && user.name.trim().toLowerCase() === "edward");
+  const user = (data.users || []).find((u) => u.id === userId);
+  if (!user || user.name.trim().toLowerCase() !== "edward") return false;
+  if (adminToken && data.config?.adminToken && adminToken !== data.config.adminToken) {
+    return false;
+  }
+  return true;
 }
 
 // Formatear estado público con reglas de privacidad por cada baño
@@ -175,16 +194,55 @@ app.get("/api/status", (req, res) => {
   res.json(getPublicStatus());
 });
 
-// Registrar nuevo usuario
+// Registrar nuevo usuario o iniciar sesión
 app.post("/api/users", (req, res) => {
-  const { name } = req.body;
+  const { name, password } = req.body;
   if (!name || typeof name !== "string" || !name.trim()) {
     return res.status(400).json({ error: "El nombre es requerido." });
   }
 
   const cleanName = name.trim();
   const data = loadData();
+  const isEdward = cleanName.toLowerCase() === "edward";
 
+  // Si es el usuario Edward, exigir contraseña
+  if (isEdward) {
+    if (!password) {
+      return res.status(401).json({
+        error: "Se requiere contraseña para el usuario administrador Edward.",
+        requirePassword: true,
+      });
+    }
+
+    if (password !== data.config.adminPassword) {
+      return res.status(401).json({
+        error: "Contraseña incorrecta para el usuario administrador Edward.",
+        requirePassword: true,
+      });
+    }
+
+    let edwardUser = data.users.find(
+      (u) => u.name.toLowerCase() === "edward"
+    );
+    if (!edwardUser) {
+      edwardUser = {
+        id: "usr_admin_edward",
+        name: "Edward",
+        createdAt: Date.now(),
+      };
+      data.users.push(edwardUser);
+      saveData(data);
+      broadcastUpdate();
+    }
+
+    return res.json({
+      message: "¡Bienvenido, Administrador Edward!",
+      user: edwardUser,
+      adminToken: data.config.adminToken,
+    });
+  }
+
+  // Para cualquier otro usuario (sin contraseña)
   const existing = data.users.find(
     (u) => u.name.toLowerCase() === cleanName.toLowerCase()
   );
@@ -402,10 +460,11 @@ app.post("/api/bathroom/leave", (req, res) => {
 
 // Cambiar la cantidad de baños disponibles
 app.post("/api/admin/bathrooms/count", (req, res) => {
-  const { userId, count } = req.body;
+  const { userId, count, adminToken } = req.body;
+  const token = adminToken || req.headers["x-admin-token"];
   const data = loadData();
 
-  if (!isEdwardAdmin(data, userId)) {
+  if (!isEdwardAdmin(data, userId, token)) {
     return res.status(403).json({
       error: "Acceso denegado: Solo el administrador Edward puede modificar la cantidad de baños.",
     });
@@ -445,10 +504,11 @@ app.post("/api/admin/bathrooms/count", (req, res) => {
 
 // Poner en mantenimiento o reactivar un baño
 app.post("/api/admin/bathrooms/maintenance", (req, res) => {
-  const { userId, bathroomId, maintenance } = req.body;
+  const { userId, bathroomId, maintenance, adminToken } = req.body;
+  const token = adminToken || req.headers["x-admin-token"];
   const data = loadData();
 
-  if (!isEdwardAdmin(data, userId)) {
+  if (!isEdwardAdmin(data, userId, token)) {
     return res.status(403).json({
       error: "Acceso denegado: Solo el administrador Edward puede gestionar el mantenimiento.",
     });
@@ -475,10 +535,112 @@ app.post("/api/admin/bathrooms/maintenance", (req, res) => {
   res.json({ message: msg, bathroom: targetBathroom });
 });
 
-// Modo de prueba / simulación de tiempo
-app.post("/api/bathroom/simulate-time", (req, res) => {
-  const { bathroomId, minutes } = req.body;
+// Eliminar un usuario (Solo Edward, y solo si NO está en el baño ni en lista de espera)
+app.post("/api/admin/users/delete", (req, res) => {
+  const { userId, targetUserId, adminToken } = req.body;
+  const token = adminToken || req.headers["x-admin-token"];
   const data = loadData();
+
+  if (!isEdwardAdmin(data, userId, token)) {
+    return res.status(403).json({
+      error: "Acceso denegado: Solo el administrador Edward puede eliminar usuarios.",
+    });
+  }
+
+  const targetUser = (data.users || []).find((u) => u.id === targetUserId);
+  if (!targetUser) {
+    return res.status(404).json({ error: "El usuario a eliminar no existe." });
+  }
+
+  if (targetUser.name.trim().toLowerCase() === "edward") {
+    return res.status(400).json({ error: "No es posible eliminar al usuario administrador Edward." });
+  }
+
+  // 1. Validar que no esté utilizando ningún baño
+  const inBathroom = (data.bathrooms || []).find(
+    (b) =>
+      b.currentTurn &&
+      (b.currentTurn.userId === targetUserId ||
+        (b.currentTurn.userName &&
+          b.currentTurn.userName.toLowerCase() === targetUser.name.toLowerCase()))
+  );
+  if (inBathroom) {
+    return res.status(400).json({
+      error: `No se puede eliminar a ${targetUser.name} porque actualmente está adentro de ${inBathroom.name}. Debe salir del baño primero.`,
+    });
+  }
+
+  // 2. Validar que no tenga turno pendiente en la lista de espera
+  const inQueue = (data.queue || []).some(
+    (q) =>
+      q.userId === targetUserId ||
+      (q.userName && q.userName.toLowerCase() === targetUser.name.toLowerCase())
+  );
+  if (inQueue) {
+    return res.status(400).json({
+      error: `No se puede eliminar a ${targetUser.name} porque tiene un turno pendiente en la lista de espera. Debe cancelar su turno primero.`,
+    });
+  }
+
+  // Eliminar usuario
+  data.users = data.users.filter((u) => u.id !== targetUserId);
+  saveData(data);
+  broadcastUpdate();
+
+  res.json({
+    message: `Usuario "${targetUser.name}" eliminado del sistema exitosamente.`,
+    deletedUserId: targetUserId,
+  });
+});
+
+// Cambiar la contraseña del administrador Edward
+app.post("/api/admin/change-password", (req, res) => {
+  const { userId, currentPassword, newPassword, adminToken } = req.body;
+  const token = adminToken || req.headers["x-admin-token"];
+  const data = loadData();
+
+  if (!isEdwardAdmin(data, userId, token)) {
+    return res.status(403).json({
+      error: "Acceso denegado: Solo el administrador Edward puede cambiar la contraseña.",
+    });
+  }
+
+  if (!currentPassword || currentPassword !== data.config.adminPassword) {
+    return res.status(400).json({
+      error: "La contraseña actual no es correcta.",
+    });
+  }
+
+  if (!newPassword || typeof newPassword !== "string" || newPassword.trim().length < 4) {
+    return res.status(400).json({
+      error: "La nueva contraseña debe tener al menos 4 caracteres.",
+    });
+  }
+
+  const cleanNew = newPassword.trim();
+  const newToken = "tok_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+
+  data.config.adminPassword = cleanNew;
+  data.config.adminToken = newToken;
+  saveData(data);
+
+  res.json({
+    message: "¡Contraseña de administrador actualizada con éxito!",
+    adminToken: newToken,
+  });
+});
+
+// Modo de prueba / simulación de tiempo (EXCLUSIVO PARA EL ADMINISTRADOR EDWARD)
+app.post("/api/bathroom/simulate-time", (req, res) => {
+  const { userId, bathroomId, minutes, adminToken } = req.body;
+  const token = adminToken || req.headers["x-admin-token"];
+  const data = loadData();
+
+  if (!isEdwardAdmin(data, userId, token)) {
+    return res.status(403).json({
+      error: "Acceso denegado: El simulador de tiempo solo está permitido para el administrador Edward.",
+    });
+  }
 
   let target = null;
   if (bathroomId) {

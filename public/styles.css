@@ -1148,3 +1148,168 @@ body {
   from { transform: translateX(100%); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
+
+/* ========================================================
+   ESTILOS PARA NUEVOS ELEMENTOS DE ADMIN Y CONTRASEÑA
+   ======================================================== */
+.admin-login-notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(79, 70, 229, 0.12);
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.admin-login-notice .notice-icon {
+  font-size: 1.5rem;
+}
+
+.admin-login-notice strong {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--primary);
+}
+
+.admin-login-notice p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  padding-right: 44px;
+}
+
+.btn-toggle-eye {
+  position: absolute;
+  right: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1.15rem;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: transform 0.15s ease;
+}
+
+.btn-toggle-eye:hover {
+  transform: scale(1.15);
+}
+
+.admin-full-width {
+  grid-column: 1 / -1;
+}
+
+.admin-help-text {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 6px 0 10px;
+}
+
+.admin-sim-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.admin-users-table {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.admin-user-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-card);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-user-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-main);
+}
+
+.user-status-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+}
+
+.tag-free {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success);
+}
+
+.tag-busy {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger);
+}
+
+.tag-queue {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--warning);
+}
+
+.tag-protected {
+  background: rgba(79, 70, 229, 0.15);
+  color: var(--primary);
+}
+
+.admin-pw-form {
+  margin-top: 10px;
+}
+
+.admin-pw-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.form-group-sm {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-group-sm label {
+  color: var(--text-muted);
+}
+
+.admin-pw-btn-cell {
+  display: flex;
+  align-items: flex-end;
+}
+
+.admin-pw-btn-cell .btn {
+  height: 38px;
+}
+
