@@ -1,0 +1,278 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BañoTurnos - Control de Turnos en Tiempo Real</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="theme-clean">
+  <div class="app-container">
+    
+    <!-- ENCABEZADO SUPERIOR -->
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-icon">🚽</span>
+        <div>
+          <h1>BañoTurnos</h1>
+          <p class="brand-tagline">Sistema inteligente para 2 o más baños y privacidad</p>
+        </div>
+      </div>
+
+      <div class="header-tools">
+        <div class="theme-picker">
+          <label for="themeSelect">🎨</label>
+          <select id="themeSelect">
+            <option value="theme-clean">🧼 Limpio</option>
+            <option value="theme-dark">🌙 Neón</option>
+            <option value="theme-duck">🐥 Pato</option>
+            <option value="theme-office">🏢 Oficina</option>
+          </select>
+        </div>
+        <button id="btnEnableNotifications" class="icon-btn" title="Activar notificaciones del navegador">
+          <span id="notifIcon">🔔</span>
+        </button>
+        <button id="soundToggleBtn" class="icon-btn" title="Activar/Desactivar Sonidos">
+          <span id="soundIcon">🔊</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ====================================================
+         VISTA 1: PÁGINA DE INICIO / INGRESO CON NOMBRE
+         ==================================================== -->
+    <section id="view-login" class="login-view">
+      <div class="card login-card">
+        <div class="login-header">
+          <span class="login-big-icon">👋</span>
+          <h2>¡Bienvenido a BañoTurnos!</h2>
+          <p>Para ingresar al sistema de turnos, escribe tu nombre o apodo. Quedarás registrado de inmediato.</p>
+        </div>
+
+        <form id="formLogin">
+          <div class="form-group">
+            <label for="inputUserName">Tu nombre o apodo:</label>
+            <input 
+              type="text" 
+              id="inputUserName" 
+              class="form-control form-control-lg" 
+              placeholder="Ej: Edward, Ruben, Carlos..." 
+              required 
+              maxlength="40"
+              autocomplete="off"
+              autofocus
+            >
+          </div>
+          <button type="submit" class="btn btn-primary btn-block btn-lg">
+            🚀 Entrar al Sistema
+          </button>
+        </form>
+
+        <!-- ACCESO RÁPIDO PARA PERSONAS YA REGISTRADAS -->
+        <div id="quickExistingUsers" class="quick-users-box" style="display:none;">
+          <p class="quick-title">¿Ya te registraste antes? Toca tu nombre:</p>
+          <div id="loginUserChips" class="login-chips">
+            <!-- Chips inyectados -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================
+         VISTA 2: DASHBOARD PRINCIPAL DE ESPERA
+         ==================================================== -->
+    <section id="view-dashboard" class="dashboard-view" style="display:none;">
+
+      <!-- BANNER DE TURNO DISPONIBLE -->
+      <div id="turnAlertBanner" class="turn-alert-banner" style="display:none;">
+        <div class="turn-alert-content">
+          <span class="turn-alert-icon">🎉</span>
+          <div class="turn-alert-text">
+            <h3 id="turnAlertTitle">¡ES TU TURNO!</h3>
+            <p id="turnAlertMessage">Uno de los baños se ha desocupado. ¡Está listo para ti!</p>
+          </div>
+          <button id="btnDismissTurnAlert" class="btn btn-primary btn-lg">
+            🚪 Entrar al Baño Disponible
+          </button>
+        </div>
+      </div>
+
+      <!-- BARRA DE SESIÓN ACTIVA -->
+      <div class="user-session-bar">
+        <div class="user-greeting">
+          <span class="avatar-badge" id="userAvatarBadge">👤</span>
+          <div>
+            <span>Conectado como:</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <strong id="sessionUserName">---</strong>
+              <span id="adminBadge" class="admin-badge" style="display:none;">👑 Administrador</span>
+            </div>
+          </div>
+        </div>
+        <button id="btnChangeUser" class="btn btn-sm btn-outline" title="Cambiar a otra persona">
+          🔄 Cambiar de persona
+        </button>
+      </div>
+
+      <!-- PANEL DE ADMINISTRACIÓN EXCLUSIVO PARA EDWARD -->
+      <div id="adminPanelCard" class="card admin-card" style="display:none;">
+        <div class="card-header space-between" style="background: rgba(79, 70, 229, 0.08);">
+          <h3><span class="header-icon">👑</span> Panel de Administración (Edward)</h3>
+          <span class="admin-pill">Exclusivo Administrador</span>
+        </div>
+        <div class="card-body">
+          <div class="admin-grid">
+            
+            <!-- CONTROL 1: CANTIDAD DE BAÑOS -->
+            <div class="admin-control-box">
+              <label><strong>🚻 Cantidad de Baños Disponibles:</strong></label>
+              <div class="admin-count-controls">
+                <button type="button" class="btn btn-sm btn-outline btn-count" data-count="1">1 Baño</button>
+                <button type="button" class="btn btn-sm btn-outline btn-count" data-count="2">2 Baños</button>
+                <button type="button" class="btn btn-sm btn-outline btn-count" data-count="3">3 Baños</button>
+                <button type="button" class="btn btn-sm btn-outline btn-count" data-count="4">4 Baños</button>
+              </div>
+              <small class="muted-text">Actualmente activos: <strong id="adminCurrentCount">2</strong></small>
+            </div>
+
+            <!-- CONTROL 2: GESTIÓN DE MANTENIMIENTO POR BAÑO -->
+            <div class="admin-control-box">
+              <label><strong>🚧 Poner en Mantenimiento / Activar:</strong></label>
+              <div id="adminMaintenanceList" class="admin-maint-list">
+                <!-- Botones inyectados dinámicamente -->
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ALERTA GLOBAL SI TODOS LOS BAÑOS ESTÁN EN MANTENIMIENTO -->
+      <div id="allMaintenanceAlert" class="alert-box alert-maintenance-global" style="display:none;">
+        <span class="alert-icon">🚧</span>
+        <div>
+          <strong>¡TODOS LOS BAÑOS EN MANTENIMIENTO!</strong>
+          <p>El servicio de baños está temporalmente suspendido por limpieza o mantenimiento técnico. No es posible solicitar turno en este momento.</p>
+        </div>
+      </div>
+      
+      <!-- GRID DE TARJETAS DE BAÑOS (Baño 1, Baño 2, etc.) -->
+      <div class="bathrooms-container" id="bathroomsGrid">
+        <!-- Renderizado dinámicamente por JS: Baño 1, Baño 2, etc. -->
+      </div>
+
+      <!-- DOS COLUMNAS: SOLICITUD DE TURNO Y LISTA DE ESPERA CENTRALIZADA -->
+      <div class="dashboard-grid">
+        
+        <!-- COLUMNA 1: MI TURNO EN LA LISTA DE ESPERA -->
+        <div class="card request-card">
+          <div class="card-header">
+            <h3><span class="header-icon">🙋</span> Mi Solicitud de Turno</h3>
+          </div>
+          <div class="card-body">
+            
+            <!-- Estado cuando el usuario ESTÁ ADENTRO DE UN BAÑO -->
+            <div id="boxInsideBathroom" class="in-queue-card" style="display:none; border-color: var(--success); background: var(--success-bg);">
+              <span class="queue-status-icon">🚽</span>
+              <h4 style="color: var(--success);" id="insideBathroomTitle">¡Tú estás en el Baño ahora!</h4>
+              <p style="margin-top: 6px;">El cronómetro está corriendo. Cuando salgas, pulsa el botón para avisar a quien sigue.</p>
+              <button id="btnLeaveFromCard" class="btn btn-primary btn-md" style="margin-top: 14px;">
+                ✅ Terminé / Salir del Baño
+              </button>
+            </div>
+
+            <!-- Estado cuando el usuario NO está en la lista de espera ni en el baño -->
+            <div id="boxNotInQueue">
+              <p class="helper-text" id="queueHelperText">
+                ¿Necesitas usar el baño? Solicita tu turno para entrar a la lista de espera compartida. Te avisaremos en cuanto cualquier baño se desocupe.
+              </p>
+              <button id="btnJoinQueue" class="btn btn-secondary btn-block btn-lg">
+                ➕ Solicitar Turno / Entrar a Lista de Espera
+              </button>
+
+              <div class="other-user-request">
+                <details>
+                  <summary>¿Anotar a otro compañero en la lista?</summary>
+                  <div class="input-inline" style="margin-top: 10px;">
+                    <select id="queueOtherSelect" class="form-control">
+                      <option value="">-- Selecciona el compañero --</option>
+                    </select>
+                    <button id="btnQueueOther" class="btn btn-sm btn-primary">Anotar</button>
+                  </div>
+                </details>
+              </div>
+            </div>
+
+            <!-- Estado cuando el usuario YA está en la lista de espera -->
+            <div id="boxInQueue" class="in-queue-card" style="display:none;">
+              <span class="queue-status-icon">⏳</span>
+              <h4>¡Estás en la Lista de Espera!</h4>
+              <p>Tu posición en la fila: <strong class="pos-highlight" id="myQueuePos">#1</strong></p>
+              <p class="queue-notice-text">🔔 Te avisaremos en cuanto cualquiera de los baños quede disponible.</p>
+              <button id="btnCancelMyTurn" class="btn btn-outline-danger btn-sm" style="margin-top: 12px;">
+                ✕ Cancelar mi turno
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- COLUMNA 2: LISTA DE ESPERA CENTRALIZADA -->
+        <div class="card queue-card">
+          <div class="card-header space-between">
+            <h3><span class="header-icon">📋</span> Fila de Espera Única</h3>
+            <span class="queue-count-pill" id="queueCount">0 en espera</span>
+          </div>
+          <div class="card-body">
+            <div id="queueListEmpty" class="empty-state">
+              <span class="empty-icon">✨</span>
+              <p>No hay nadie en la lista de espera.</p>
+              <small>¡Hay acceso directo a los baños disponibles!</small>
+            </div>
+
+            <ul id="queueList" class="queue-items" style="display:none;">
+              <!-- Turnos inyectados dinámicamente -->
+            </ul>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- SECCIÓN COLAPSABLE: SIMULADOR DE PRUEBAS -->
+      <div class="card test-card-collapsed">
+        <details>
+          <summary><strong>🧪 Simulador de Tiempos de Prueba (10 min / 20 min)</strong></summary>
+          <div class="test-body">
+            <p class="helper-text">
+              Comprueba de inmediato cómo reaccionan las alertas de privacidad sin tener que esperar 20 minutos reales:
+            </p>
+            <div class="test-btn-group">
+              <button class="btn btn-test" data-sim-mins="0">⏱️ 0 min (Normal / Privado)</button>
+              <button class="btn btn-test btn-test-warn" data-sim-mins="11">⚠️ 11 min (Advertencia >10m)</button>
+              <button class="btn btn-test btn-test-urgent" data-sim-mins="21">🚨 21 min (Revelar Nombre >20m)</button>
+            </div>
+          </div>
+        </details>
+      </div>
+
+    </section>
+
+    <!-- PIE DE PÁGINA -->
+    <footer class="app-footer">
+      <div class="footer-content">
+        <p>🚽 <strong>BañoTurnos</strong> &bull; Respeto y orden en tu espacio de trabajo</p>
+        <span class="conn-status" id="connStatus">🟢 Conectado en tiempo real</span>
+      </div>
+    </footer>
+
+    <!-- TOAST NOTIFICACIONES -->
+    <div id="toastContainer" class="toast-container"></div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

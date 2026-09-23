@@ -1,0 +1,49 @@
+{
+  "users": [
+    {
+      "id": "usr_admin_edward",
+      "name": "Edward",
+      "createdAt": 1790199271000
+    },
+    {
+      "id": "usr_1790199271744_tt12",
+      "name": "Ruben Dario",
+      "createdAt": 1790199271744
+    },
+    {
+      "id": "usr_1790199294670_3cgc",
+      "name": "Carlos Mendoza",
+      "createdAt": 1790199294670
+    },
+    {
+      "id": "usr_1790199294746_qu62",
+      "name": "Ana Gomez",
+      "createdAt": 1790199294746
+    }
+  ],
+  "queue": [],
+  "config": {
+    "adminName": "Edward"
+  },
+  "bathrooms": [
+    {
+      "id": 1,
+      "name": "Baño 1",
+      "status": "free",
+      "isMaintenance": false,
+      "currentTurn": {
+        "id": "active_1790202117058",
+        "userId": "usr_admin_edward",
+        "userName": "Edward",
+        "enteredAt": 1790202117058
+      }
+    },
+    {
+      "id": 2,
+      "name": "Baño 2",
+      "status": "free",
+      "isMaintenance": false,
+      "currentTurn": null
+    }
+  ]
+}

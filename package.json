@@ -1,0 +1,15 @@
+﻿{
+  "name": "bano-turnos",
+  "version": "1.0.0",
+  "description": "Sistema de gestión de turnos para el baño con alertas de tiempo y temas personalizables",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["turnos", "baño", "cola", "tiempo-real"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
