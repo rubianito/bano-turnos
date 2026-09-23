@@ -21,12 +21,19 @@
       "createdAt": 1790199294746
     },
     {
-      "id": "usr_1790205524714_inkr",
-      "name": "oscar",
-      "createdAt": 1790205524714
+      "id": "usr_1790206439649_nbtp",
+      "name": "pilar",
+      "createdAt": 1790206439649
     }
   ],
-  "queue": [],
+  "queue": [
+    {
+      "id": "turn_1790206517567_doon",
+      "userId": "usr_1790199294670_3cgc",
+      "userName": "Carlos Mendoza",
+      "requestedAt": 1790206517567
+    }
+  ],
   "config": {
     "adminName": "Edward",
     "adminPassword": "Tunainpec19862**",
@@ -38,7 +45,12 @@
       "name": "Baño 1",
       "status": "free",
       "isMaintenance": false,
-      "currentTurn": null
+      "currentTurn": {
+        "id": "active_1790206445574",
+        "userId": "usr_1790206439649_nbtp",
+        "userName": "pilar",
+        "enteredAt": 1790206445574
+      }
     },
     {
       "id": 2,
